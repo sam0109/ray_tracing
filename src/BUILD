@@ -1,16 +1,15 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "library",
-    srcs = ["library.cc"],
-    hdrs = ["library.h"],
+    name = "vec",
+    hdrs = ["vec.h"],
 )
 
 cc_test(
-    name = "library_test",
-    srcs = ["library_test.cc"],
+    name = "vec_test",
+    srcs = ["vec_test.cc"],
     deps = [
-        #":library",
+        ":vec",
         "@com_google_googletest//:gtest_main",
     ],
 )
