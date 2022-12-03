@@ -3,6 +3,9 @@ package(default_visibility = ["//visibility:public"])
 cc_library(
     name = "vec",
     hdrs = ["vec.h"],
+    deps = [
+        "@com_google_absl//absl/functional:function_ref",
+    ],
 )
 
 cc_test(
