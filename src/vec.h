@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "absl/functional/function_ref.h"
+#include "absl/strings/str_join.h"
 
 template <typename T, int8_t N>
 class Vec {
@@ -46,7 +47,7 @@ class Vec {
   }
 
   Vec &ZipOnto(absl::FunctionRef<T(T, T)> f, Vec<T, N> other) {
-    for (int64_t i = 0; i < N; ++i) {
+    for (int8_t i = 0; i < N; ++i) {
       e[i] = f(e[i], other[i]);
     }
     return *this;
@@ -55,15 +56,6 @@ class Vec {
   Vec Zip(absl::FunctionRef<T(T, T)> f, Vec<T, N> other) const {
     Vec<T, N> result = *this;
     result.ZipOnto(f, other);
-    return result;
-  }
-
-  template <typename Acc>
-  Acc &Accumulate(absl::FunctionRef<T(Acc, T)> f, Acc &initial) const {
-    Acc &result = initial;
-    for (auto element : e) {
-      result = f(result, element);
-    }
     return result;
   }
 
@@ -80,9 +72,17 @@ class Vec {
     return Map([](T e) { return -e; });
   }
 
-  T operator[](int64_t i) const { return e[i]; }
+  T operator[](int8_t i) const { return e[i]; }
 
-  T &operator[](int64_t i) { return e[i]; }
+  T &operator[](int8_t i) { return e[i]; }
+
+  auto begin() { return e.begin(); }
+
+  auto cbegin() const { return e.begin(); }
+
+  auto end() { return e.end(); }
+
+  auto cend() const { return e.end(); }
 
   Vec &operator+=(const Vec &v) {
     return ZipOnto([](T l, T r) { return l + r; }, v);
@@ -110,37 +110,52 @@ class Vec {
 using point3 = Vec<double, 3>;  // 3D point
 using color = Vec<double, 3>;   // RGB color
 
-template <typename T, int64_t N>
+template <typename T, int8_t N>
+auto begin(const Vec<T, N> &v) {
+  return v.cbegin();
+}
+
+template <typename T, int8_t N>
+auto end(const Vec<T, N> &v) {
+  return v.cend();
+}
+
+template <typename T, int8_t N>
+std::ostream &operator<<(std::ostream &out, const Vec<T, N> &v) {
+  return out << absl::StrJoin(v, " ");
+}
+
+template <typename T, int8_t N>
 Vec<T, N> operator+(const Vec<T, N> &u, const Vec<T, N> &v) {
   return u.Zip([](T l, T r) { return l + r; }, v);
 }
 
-template <typename T, int64_t N>
+template <typename T, int8_t N>
 Vec<T, N> operator-(const Vec<T, N> &u, const Vec<T, N> &v) {
   return u.Zip([](T l, T r) { return l - r; }, v);
 }
 
-template <typename T, int64_t N>
+template <typename T, int8_t N>
 Vec<T, N> operator*(const Vec<T, N> &u, const Vec<T, N> &v) {
   return u.Zip([](T l, T r) { return l * r; }, v);
 }
 
-template <typename T, int64_t N>
+template <typename T, int8_t N>
 Vec<T, N> operator*(T t, const Vec<T, N> &v) {
   return v.Map([t](T e) { return t * e; });
 }
 
-template <typename T, int64_t N>
+template <typename T, int8_t N>
 Vec<T, N> operator*(const Vec<T, N> &v, double t) {
   return t * v;
 }
 
-template <typename T, int64_t N>
+template <typename T, int8_t N>
 Vec<T, N> operator/(Vec<T, N> v, double t) {
   return (1 / t) * v;
 }
 
-template <typename T, int64_t N>
+template <typename T, int8_t N>
 double dot(const Vec<T, N> &u, const Vec<T, N> &v) {
   return (u * v).Accumulate([](T acc, T e) { acc + e; });
 }
@@ -151,7 +166,7 @@ Vec<T, 3> cross(const Vec<T, 3> &u, const Vec<T, 3> &v) {
                    u.X() * v.Y() - u.Y() * v.X());
 }
 
-template <typename T, int64_t N>
+template <typename T, int8_t N>
 Vec<T, N> unit_vector(Vec<T, N> v) {
   return v / v.length();
 }

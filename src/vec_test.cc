@@ -47,3 +47,8 @@ TEST(VecTest, Length) {
   EXPECT_EQ(v1.length_squared(), 49.0);
   EXPECT_EQ(v1.length(), 7.0);
 }
+
+TEST(VecTest, Prints) {
+  Vec<double, 3> v1{2.0, 3.0, 6.0};
+  std::cout << v1 << std::endl;
+}

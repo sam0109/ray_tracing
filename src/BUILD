@@ -5,6 +5,7 @@ cc_library(
     hdrs = ["vec.h"],
     deps = [
         "@com_google_absl//absl/functional:function_ref",
+        "@com_google_absl//absl/strings",
     ],
 )
 
