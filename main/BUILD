@@ -3,5 +3,7 @@ cc_binary(
     srcs = ["main.cc"],
     deps = [
         "//src:vec",
+        "//src:color",
+        "//src:ray",
     ],
 )

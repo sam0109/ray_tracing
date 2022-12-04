@@ -9,7 +9,11 @@
 #include "absl/functional/function_ref.h"
 #include "absl/strings/str_join.h"
 
-template <typename T, int8_t N>
+struct NoneTag {};
+struct ColorTag {};
+struct SpaceTag {};
+
+template <typename T, int8_t N, typename Tag = NoneTag>
 class Vec {
  public:
   Vec() { e.fill(0); }
@@ -21,15 +25,27 @@ class Vec {
   }
 
   T X() const {
-    static_assert(N > 0);
+    static_assert(N > 0 && std::is_same_v<Tag, SpaceTag>);
     return e[0];
   }
   T Y() const {
-    static_assert(N > 1);
+    static_assert(N > 1 && std::is_same_v<Tag, SpaceTag>);
     return e[1];
   }
   T Z() const {
-    static_assert(N > 2);
+    static_assert(N > 2 && std::is_same_v<Tag, SpaceTag>);
+    return e[2];
+  }
+  T R() const {
+    static_assert(N > 0 && std::is_same_v<Tag, ColorTag>);
+    return e[0];
+  }
+  T G() const {
+    static_assert(N > 1 && std::is_same_v<Tag, ColorTag>);
+    return e[1];
+  }
+  T B() const {
+    static_assert(N > 2 && std::is_same_v<Tag, ColorTag>);
     return e[2];
   }
 
@@ -46,15 +62,15 @@ class Vec {
     return other;
   }
 
-  Vec &ZipOnto(absl::FunctionRef<T(T, T)> f, Vec<T, N> other) {
+  Vec &ZipOnto(absl::FunctionRef<T(T, T)> f, Vec<T, N, Tag> other) {
     for (int8_t i = 0; i < N; ++i) {
       e[i] = f(e[i], other[i]);
     }
     return *this;
   }
 
-  Vec Zip(absl::FunctionRef<T(T, T)> f, Vec<T, N> other) const {
-    Vec<T, N> result = *this;
+  Vec Zip(absl::FunctionRef<T(T, T)> f, Vec<T, N, Tag> other) const {
+    Vec<T, N, Tag> result = *this;
     result.ZipOnto(f, other);
     return result;
   }
@@ -107,67 +123,68 @@ class Vec {
 };
 
 // Type aliases for Vec
-using point3 = Vec<double, 3>;  // 3D point
-using color = Vec<double, 3>;   // RGB color
+using Point = Vec<double, 3, SpaceTag>;  // 3D point
+using Color = Vec<double, 3, ColorTag>;  // RGB color
+using Vec3 = Vec<double, 3, SpaceTag>;    // Regular old vector
 
-template <typename T, int8_t N>
-auto begin(const Vec<T, N> &v) {
+template <typename T, int8_t N, typename Tag>
+auto begin(const Vec<T, N, Tag> &v) {
   return v.cbegin();
 }
 
-template <typename T, int8_t N>
-auto end(const Vec<T, N> &v) {
+template <typename T, int8_t N, typename Tag>
+auto end(const Vec<T, N, Tag> &v) {
   return v.cend();
 }
 
-template <typename T, int8_t N>
-std::ostream &operator<<(std::ostream &out, const Vec<T, N> &v) {
+template <typename T, int8_t N, typename Tag>
+std::ostream &operator<<(std::ostream &out, const Vec<T, N, Tag> &v) {
   return out << absl::StrJoin(v, " ");
 }
 
-template <typename T, int8_t N>
-Vec<T, N> operator+(const Vec<T, N> &u, const Vec<T, N> &v) {
+template <typename T, int8_t N, typename Tag>
+Vec<T, N, Tag> operator+(const Vec<T, N, Tag> &u, const Vec<T, N, Tag> &v) {
   return u.Zip([](T l, T r) { return l + r; }, v);
 }
 
-template <typename T, int8_t N>
-Vec<T, N> operator-(const Vec<T, N> &u, const Vec<T, N> &v) {
+template <typename T, int8_t N, typename Tag>
+Vec<T, N, Tag> operator-(const Vec<T, N, Tag> &u, const Vec<T, N, Tag> &v) {
   return u.Zip([](T l, T r) { return l - r; }, v);
 }
 
-template <typename T, int8_t N>
-Vec<T, N> operator*(const Vec<T, N> &u, const Vec<T, N> &v) {
+template <typename T, int8_t N, typename Tag>
+Vec<T, N, Tag> operator*(const Vec<T, N, Tag> &u, const Vec<T, N, Tag> &v) {
   return u.Zip([](T l, T r) { return l * r; }, v);
 }
 
-template <typename T, int8_t N>
-Vec<T, N> operator*(T t, const Vec<T, N> &v) {
+template <typename T, int8_t N, typename Tag>
+Vec<T, N, Tag> operator*(T t, const Vec<T, N, Tag> &v) {
   return v.Map([t](T e) { return t * e; });
 }
 
-template <typename T, int8_t N>
-Vec<T, N> operator*(const Vec<T, N> &v, double t) {
+template <typename T, int8_t N, typename Tag>
+Vec<T, N, Tag> operator*(const Vec<T, N, Tag> &v, double t) {
   return t * v;
 }
 
-template <typename T, int8_t N>
-Vec<T, N> operator/(Vec<T, N> v, double t) {
+template <typename T, int8_t N, typename Tag>
+Vec<T, N, Tag> operator/(Vec<T, N, Tag> v, double t) {
   return (1 / t) * v;
 }
 
-template <typename T, int8_t N>
-double dot(const Vec<T, N> &u, const Vec<T, N> &v) {
+template <typename T, int8_t N, typename Tag>
+double dot(const Vec<T, N, Tag> &u, const Vec<T, N, Tag> &v) {
   return (u * v).Accumulate([](T acc, T e) { acc + e; });
 }
 
-template <typename T>
-Vec<T, 3> cross(const Vec<T, 3> &u, const Vec<T, 3> &v) {
+template <typename T, typename Tag>
+Vec<T, 3, Tag> cross(const Vec<T, 3, Tag> &u, const Vec<T, 3, Tag> &v) {
   return Vec<T, 3>(u.Y() * v.Z() - u.Z() * v.Y(), u.Z() * v.X() - u.X() * v.Z(),
                    u.X() * v.Y() - u.Y() * v.X());
 }
 
-template <typename T, int8_t N>
-Vec<T, N> unit_vector(Vec<T, N> v) {
+template <typename T, int8_t N, typename Tag>
+Vec<T, N, Tag> unit_vector(Vec<T, N, Tag> v) {
   return v / v.length();
 }
 
