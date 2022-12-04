@@ -18,8 +18,16 @@ class Vec {
  public:
   Vec() { e.fill(0); }
 
-  template <typename... Ts>
-  explicit Vec(Ts &&...ts) : e{std::forward<Ts>(ts)...} {
+  template <typename OtherTag>
+  Vec(const Vec<T, N, OtherTag> &other) {
+    std::copy(other.cbegin(), other.cend(), e.begin());
+  }
+
+  template <
+      typename... Ts,
+      std::enable_if_t<(std::is_same_v<T, absl::remove_cvref_t<Ts>> && ...),
+                       bool> = true>
+  explicit Vec(Ts... ts) : e{ts...} {
     // Ensure we're passing in the correct number of arguments
     static_assert(sizeof...(ts) == N);
   }
@@ -125,7 +133,7 @@ class Vec {
 // Type aliases for Vec
 using Point = Vec<double, 3, SpaceTag>;  // 3D point
 using Color = Vec<double, 3, ColorTag>;  // RGB color
-using Vec3 = Vec<double, 3, SpaceTag>;    // Regular old vector
+using Vec3 = Vec<double, 3, SpaceTag>;   // Regular old vector
 
 template <typename T, int8_t N, typename Tag>
 auto begin(const Vec<T, N, Tag> &v) {
@@ -174,7 +182,8 @@ Vec<T, N, Tag> operator/(Vec<T, N, Tag> v, double t) {
 
 template <typename T, int8_t N, typename Tag>
 double dot(const Vec<T, N, Tag> &u, const Vec<T, N, Tag> &v) {
-  return (u * v).Accumulate([](T acc, T e) { acc + e; });
+  return (u * v).template Accumulate<T>(
+      [](T acc, T e) -> T { return acc + e; });
 }
 
 template <typename T, typename Tag>

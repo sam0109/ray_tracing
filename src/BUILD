@@ -1,6 +1,39 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
+    name = "rtweekend",
+    hdrs = ["rtweekend.h"],
+)
+
+cc_library(
+    name = "sphere",
+    hdrs = ["sphere.h"],
+    deps = [
+        ":hittable",
+        ":ray",
+        ":vec",
+    ],
+)
+
+cc_library(
+    name = "hittable_list",
+    hdrs = ["hittable_list.h"],
+    deps = [
+        ":hittable",
+        ":ray",
+    ],
+)
+
+cc_library(
+    name = "hittable",
+    hdrs = ["hittable.h"],
+    deps = [
+        ":ray",
+        ":vec",
+    ],
+)
+
+cc_library(
     name = "ray",
     hdrs = ["ray.h"],
     deps = [
